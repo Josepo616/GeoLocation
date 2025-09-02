@@ -9,9 +9,17 @@ import SwiftUI
 
 @main
 struct GeoLocationApp: App {
+    @State var stringLatestLocation: String = ""
+    @State var stringCurrentLocation: String = ""
+    @State var stringDistanceChaged: String = ""
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MapView(
+                stringLatestLocation: $stringLatestLocation,
+                stringCurrentLocation: $stringCurrentLocation,
+                stringDistanceChanged: $stringDistanceChaged
+            )
         }
     }
 }
