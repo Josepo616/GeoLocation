@@ -16,6 +16,7 @@ struct MapContentView: View {
     @State private var droppedPins: [CLLocationCoordinate2D] = []
     @State private var mapView = MKMapView()
 
+    private let geocoder = CLGeocoder()
 
     var body: some View {
         VStack {
@@ -35,13 +36,29 @@ struct MapContentView: View {
                 .padding()
         }
         .onReceive(locationManager.$userLocation.compactMap { $0 }) { location in
-            let coordinateString = "\(location.latitude), \(location.longitude)"
+            let clLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
             
-            if stringLatestLocation.isEmpty {
-                stringLatestLocation = coordinateString
+            geocoder.reverseGeocodeLocation(clLocation) { placemarks, error in
+                if let placemark = placemarks?.first {
+                    let placeName = [
+                        placemark.name,
+                        placemark.locality,
+                        placemark.administrativeArea,
+                        placemark.country
+                    ]
+                        .compactMap { $0 }
+                        .joined(separator: ", ")
+                    
+                    DispatchQueue.main.async {
+                        if stringLatestLocation.isEmpty {
+                            stringLatestLocation = placeName
+                        }
+                        stringCurrentLocation = placeName
+                    }
+                } else if let error = error {
+                    print("[Geocoder] Error: \(error.localizedDescription)")
+                }
             }
-            
-            stringCurrentLocation = coordinateString
         }
     }
 }

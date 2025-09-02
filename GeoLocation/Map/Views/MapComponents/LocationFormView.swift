@@ -17,14 +17,17 @@ struct LocationFormView: View {
         Form {
             Section(header: Text("Latest location")) {
                 TextField("Hello example", text: $stringLatestLocation)
+                    .disabled(true)
             }
 
             Section(header: Text("Current location")) {
                 TextField("Hello example", text: $stringCurrentLocation)
+                    .disabled(true)
             }
 
             Section(header: Text("Distance changed")) {
                 TextField("Hello example", text: $stringDistanceChanged)
+                    .disabled(true)
             }
         }
     }

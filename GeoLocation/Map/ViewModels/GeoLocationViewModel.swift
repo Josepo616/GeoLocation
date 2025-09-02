@@ -31,7 +31,6 @@ class GeoLocationViewModel: NSObject, ObservableObject, CLLocationManagerDelegat
 
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
-            print("[LocationManager] Permiso concedido, iniciando actualización de ubicación")
             locationManager.startUpdatingLocation()
         case .notDetermined:
             break

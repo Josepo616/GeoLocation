@@ -7,12 +7,17 @@
 
 import SwiftUI
 import MapKit
+import Combine
 
 struct TapMapView: UIViewRepresentable {
     
     @Binding var droppedPins: [CLLocationCoordinate2D]
+    @Binding var showInfo: Bool
     var initialCenter: CLLocationCoordinate2D?
 
+    static let coordinatePublisher = PassthroughSubject<CLLocationCoordinate2D, Never>()
+
+    
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
@@ -47,23 +52,29 @@ struct TapMapView: UIViewRepresentable {
 
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: TapMapView
+        let coordinatePublisher = PassthroughSubject<CLLocationCoordinate2D, Never>()
 
         init(_ parent: TapMapView) {
             self.parent = parent
         }
 
         @objc func handleTap(_ gestureRecognizer: UITapGestureRecognizer) {
-            let location = gestureRecognizer.location(in: gestureRecognizer.view)
-            if let mapView = gestureRecognizer.view as? MKMapView {
-                let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
+            guard let mapView = gestureRecognizer.view as? MKMapView else { return }
+            let location = gestureRecognizer.location(in: mapView)
+            let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
 
-                DispatchQueue.main.async {
-                    if !self.parent.droppedPins.isEmpty {
-                        self.parent.droppedPins.removeLast()
-                    }
-                    self.parent.droppedPins.append(coordinate)
+            DispatchQueue.main.async {
+                self.coordinatePublisher.send(coordinate)
+                TapMapView.coordinatePublisher.send(coordinate)
+
+                if !self.parent.droppedPins.isEmpty {
+                    self.parent.droppedPins.removeLast()
                 }
+
+                self.parent.droppedPins.append(coordinate)
+                self.parent.showInfo = true
             }
         }
     }
+
 }
