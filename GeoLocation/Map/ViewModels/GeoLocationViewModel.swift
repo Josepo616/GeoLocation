@@ -9,11 +9,16 @@ import Combine
 import CoreLocation
 import Foundation
 
-class GeoLocationViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
+class GeoLocationViewModel: NSObject, ObservableObject,
+    CLLocationManagerDelegate
+{
 
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var authorizationStatus: CLAuthorizationStatus?
+    private let locationManager = CLLocationManager()
+    private let geocoder = CLGeocoder()
+    var cancellables = Set<AnyCancellable>()
+
 
     override init() {
         super.init()
@@ -56,7 +61,39 @@ class GeoLocationViewModel: NSObject, ObservableObject, CLLocationManagerDelegat
         }
     }
 
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("[LocationManager] Error getting location: \(error.localizedDescription)")
+    func locationManager(
+        _ manager: CLLocationManager,
+        didFailWithError error: Error
+    ) {
+        print(
+            "[LocationManager] Error getting location: \(error.localizedDescription)"
+        )
+    }
+
+    func reverseGeocode(_ location: CLLocation) -> AnyPublisher<
+        CLPlacemark, Error
+    > {
+        geocoder
+            .reverseGeocodePublisher(for: location)
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+    
+    func getPlaceName(from location: CLLocation) -> AnyPublisher<String, Error> {
+        return geocoder
+            .reverseGeocodePublisher(for: location)
+            .map { placemark in
+                let placeName = [
+                    placemark.name,
+                    placemark.locality,
+                    placemark.administrativeArea,
+                    placemark.country
+                ]
+                    .compactMap { $0 }
+                    .joined(separator: ", ")
+                return placeName
+            }
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
     }
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MapView: View {
 
+    @StateObject private var locationViewModel = GeoLocationViewModel()
     @Binding var stringLatestLocation: String
     @Binding var stringCurrentLocation: String
     @Binding var stringDistanceChanged: String
@@ -21,7 +22,8 @@ struct MapView: View {
                 MapContentView(
                     stringLatestLocation: $stringLatestLocation,
                     stringCurrentLocation: $stringCurrentLocation,
-                    stringDistanceChanged: $stringDistanceChanged
+                    stringDistanceChanged: $stringDistanceChanged,
+                    locationViewModel: locationViewModel
                 )
                 .tabItem {
                     Image(systemName: "map")

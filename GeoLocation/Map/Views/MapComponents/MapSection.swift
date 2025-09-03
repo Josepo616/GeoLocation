@@ -10,18 +10,18 @@ import SwiftUI
 
 struct MapSection: View {
 
-    @ObservedObject var locationManager: GeoLocationViewModel
     @Binding var mapView: MKMapView
     @Binding var droppedPins: [CLLocationCoordinate2D]
     @State var showInfo: Bool = false
     @State private var didDropInitialPin = false
     @State private var mensaje: String = ""
-
     private let geocoder = CLGeocoder()
+    var locationViewModel: GeoLocationViewModel
+
 
     var body: some View {
         VStack {
-            if let userLocation = locationManager.userLocation {
+            if let userLocation = locationViewModel.userLocation {
                 TapMapView(
                     droppedPins: $droppedPins,
                     showInfo: $showInfo,
@@ -38,7 +38,8 @@ struct MapSection: View {
                 .onReceive(TapMapView.coordinatePublisher) { coordinate in
                     handleMapTap(at: coordinate)
                 }
-                .alert("Location", isPresented: $showInfo, presenting: mensaje) { _ in
+                .alert("Location", isPresented: $showInfo, presenting: mensaje)
+                { _ in
                     Button("OK") { showInfo = false }
                     Button("Try Again") { showInfo = false }
                 } message: { _ in
@@ -55,25 +56,20 @@ struct MapSection: View {
     // MARK: - Helpers
 
     private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
-        let clLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let clLocation = CLLocation(
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        )
 
-        geocoder.reverseGeocodeLocation(clLocation) { placemarks, error in
-            if let placemark = placemarks?.first {
-                let placeName = [
-                    placemark.name,
-                    placemark.locality,
-                    placemark.administrativeArea,
-                    placemark.country,
-                ]
-                .compactMap { $0 }
-                .joined(separator: ", ")
-
-                DispatchQueue.main.async {
-                    mensaje = placeName
+        locationViewModel.getPlaceName(from: clLocation)
+            .sink { completion in
+                if case .failure(let error) = completion {
+                    print("[Geocoder] Error: \(error.localizedDescription)")
                 }
-            } else if let error = error {
-                print("[Geocoder] Error: \(error.localizedDescription)")
+            } receiveValue: { placeName in
+                mensaje = placeName
             }
-        }
+            .store(in: &locationViewModel.cancellables)
+
     }
 }
