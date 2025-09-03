@@ -5,95 +5,95 @@
 //  Created by JoseAlvarez on 9/2/25.
 //
 
-import Combine
-import CoreLocation
 import Foundation
+import CoreLocation
+import Combine
 
-class GeoLocationViewModel: NSObject, ObservableObject,
-    CLLocationManagerDelegate
-{
-
+final class GeoLocationViewModel: ObservableObject {
+    
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var authorizationStatus: CLAuthorizationStatus?
-    private let locationManager = CLLocationManager()
+    @Published var locationError: APIError?
+    @Published private(set) var isConnected: Bool = true
+
+    private let locationService = LocationService()
+    private let networkMonitor = NetworkMonitorService()
     private let geocoder = CLGeocoder()
     var cancellables = Set<AnyCancellable>()
 
-
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingLocation()
-    }
-
-    func locationManager(
-        _ manager: CLLocationManager,
-        didChangeAuthorization status: CLAuthorizationStatus
-    ) {
-        authorizationStatus = status
-
-        switch status {
-        case .authorizedWhenInUse, .authorizedAlways:
-            locationManager.startUpdatingLocation()
-        case .notDetermined:
-            break
-        case .restricted:
-            break
-        case .denied:
-            break
-        @unknown default:
-            break
-        }
-    }
-
-    func locationManager(
-        _ manager: CLLocationManager,
-        didUpdateLocations locations: [CLLocation]
-    ) {
-        guard let location = locations.last else {
-            return
-        }
-
-        DispatchQueue.main.async {
-            self.userLocation = location.coordinate
-        }
-    }
-
-    func locationManager(
-        _ manager: CLLocationManager,
-        didFailWithError error: Error
-    ) {
-        print(
-            "[LocationManager] Error getting location: \(error.localizedDescription)"
-        )
-    }
-
-    func reverseGeocode(_ location: CLLocation) -> AnyPublisher<
-        CLPlacemark, Error
-    > {
-        geocoder
-            .reverseGeocodePublisher(for: location)
-            .receive(on: DispatchQueue.main)
-            .eraseToAnyPublisher()
-    }
-    
-    func getPlaceName(from location: CLLocation) -> AnyPublisher<String, Error> {
-        return geocoder
-            .reverseGeocodePublisher(for: location)
-            .map { placemark in
-                let placeName = [
-                    placemark.name,
-                    placemark.locality,
-                    placemark.administrativeArea,
-                    placemark.country
-                ]
-                    .compactMap { $0 }
-                    .joined(separator: ", ")
-                return placeName
+    init() {
+        bindServices()
+        Timer
+            .publish(every: 5.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                self?.locationService.requestLocation()
             }
+            .store(in: &cancellables)
+    }
+
+    private func bindServices() {
+        locationService.locationPublisher
             .receive(on: DispatchQueue.main)
-            .eraseToAnyPublisher()
+            .sink(receiveCompletion: { _ in },
+                  receiveValue: { [weak self] location in
+                self?.userLocation = location.coordinate
+            })
+            .store(in: &cancellables)
+
+        locationService.authorizationPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.authorizationStatus = status
+            }
+            .store(in: &cancellables)
+
+        locationService.errorPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] error in
+                self?.locationError = error
+            }
+            .store(in: &cancellables)
+
+        networkMonitor.isConnectedPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] connected in
+                self?.isConnected = connected
+                if !connected {
+                    self?.locationError = .noConnection
+                } else if self?.locationError == .noConnection {
+                    self?.locationError = nil
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    func getPlaceName(from location: CLLocation) -> AnyPublisher<String, APIError> {
+        guard isConnected else {
+            return Fail(error: .noConnection).eraseToAnyPublisher()
+        }
+
+        return Future<String, APIError> { [weak self] promise in
+            self?.geocoder.reverseGeocodeLocation(location) { placemarks, error in
+                if let error = error {
+                    promise(.failure(LocationErrorMapper.map(error)))
+                    return
+                }
+
+                guard let placemark = placemarks?.first,
+                      let name = placemark.name,
+                      let locality = placemark.locality,
+                      let administrativeArea = placemark.administrativeArea,
+                      let country = placemark.country else {
+                    promise(.failure(.geocodingFailed))
+                    return
+                }
+
+                let fullName = [name, locality, administrativeArea, country].joined(separator: ", ")
+                promise(.success(fullName))
+            }
+        }
+        .receive(on: DispatchQueue.main)
+        .eraseToAnyPublisher()
     }
 }

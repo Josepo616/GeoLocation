@@ -12,7 +12,6 @@ import SwiftUI
 struct TapMapView: UIViewRepresentable {
 
     @Binding var droppedPins: [CLLocationCoordinate2D]
-    @Binding var showInfo: Bool
     var initialCenter: CLLocationCoordinate2D?
     static let coordinatePublisher = PassthroughSubject<
         CLLocationCoordinate2D, Never
@@ -75,7 +74,7 @@ struct TapMapView: UIViewRepresentable {
                 location,
                 toCoordinateFrom: mapView
             )
-
+            
             self.coordinatePublisher.send(coordinate)
             TapMapView.coordinatePublisher.send(coordinate)
 
@@ -84,8 +83,6 @@ struct TapMapView: UIViewRepresentable {
             }
 
             self.parent.droppedPins.append(coordinate)
-            self.parent.showInfo = true
-
         }
     }
 }

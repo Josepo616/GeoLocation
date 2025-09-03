@@ -12,10 +12,13 @@ struct MapSection: View {
 
     @Binding var mapView: MKMapView
     @Binding var droppedPins: [CLLocationCoordinate2D]
-    @State var showInfo: Bool = false
+    @State var showInfo = false
+    @State var showFailed = false
     @State private var didDropInitialPin = false
-    @State private var mensaje: String = ""
+    @State private var placeFormated = ""
+    @State private var errorMessage = ""
     private let geocoder = CLGeocoder()
+    var error: APIError?
     var locationViewModel: GeoLocationViewModel
 
 
@@ -24,7 +27,6 @@ struct MapSection: View {
             if let userLocation = locationViewModel.userLocation {
                 TapMapView(
                     droppedPins: $droppedPins,
-                    showInfo: $showInfo,
                     initialCenter: userLocation
                 )
                 .frame(maxWidth: .infinity, maxHeight: 300, alignment: .top)
@@ -38,13 +40,21 @@ struct MapSection: View {
                 .onReceive(TapMapView.coordinatePublisher) { coordinate in
                     handleMapTap(at: coordinate)
                 }
-                .alert("Location", isPresented: $showInfo, presenting: mensaje)
+                .alert("Location", isPresented: $showInfo, presenting: placeFormated)
                 { _ in
                     Button("OK") { showInfo = false }
-                    Button("Try Again") { showInfo = false }
                 } message: { _ in
-                    Text(mensaje)
-                        .foregroundColor(.red)
+
+                    Text(placeFormated)
+                        .foregroundColor(Color.red)
+                }
+                .alert("Error", isPresented: $showFailed, presenting: error)
+                { _ in
+                    Button("OK") { showFailed = false }
+                } message: { error in
+
+                    Text(error.errorDescription!)
+                        .foregroundColor(Color.red)
                 }
             } else {
                 ProgressView("Getting location...")
@@ -63,13 +73,15 @@ struct MapSection: View {
 
         locationViewModel.getPlaceName(from: clLocation)
             .sink { completion in
+                print("get place if not fail")
                 if case .failure(let error) = completion {
                     print("[Geocoder] Error: \(error.localizedDescription)")
+                    showFailed = true
                 }
             } receiveValue: { placeName in
-                mensaje = placeName
+                placeFormated = placeName
+                showInfo = true
             }
             .store(in: &locationViewModel.cancellables)
-
     }
 }

@@ -23,6 +23,7 @@ struct MapContentView: View {
             MapSection(
                 mapView: $mapView,
                 droppedPins: $droppedPins,
+                error: locationViewModel.locationError,
                 locationViewModel: locationViewModel
 
             )
