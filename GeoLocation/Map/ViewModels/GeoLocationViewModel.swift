@@ -1,30 +1,36 @@
 //
-//  LocationManager.swift
+//  GeoLocationManager.swift
 //  GeoLocation
 //
 //  Created by JoseAlvarez on 9/2/25.
 //
 
-import Foundation
-import CoreLocation
 import Combine
+import CoreLocation
+import Foundation
 
 final class GeoLocationViewModel: ObservableObject {
-    
+
+    @Published private(set) var isConnected: Bool = true
+    @Published private(set) var visitedPlaces: [VisitedPlaceModel] = []
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var authorizationStatus: CLAuthorizationStatus?
     @Published var locationError: APIError?
     @Published var showFailed = false
-    @Published private(set) var isConnected: Bool = true
-
-
+    @Published var stringLatestLocation: String = ""
+    @Published var stringCurrentLocation: String = ""
+    @Published var stringDistanceChanged: String = ""
+    
     private let locationService = LocationService()
     private let networkMonitor = NetworkMonitorService()
     private let geocoder = CLGeocoder()
+    private var lastFetchedLocation: CLLocation?
+
     var cancellables = Set<AnyCancellable>()
 
     init() {
         bindServices()
+
         Timer
             .publish(every: 5.0, on: .main, in: .common)
             .autoconnect()
@@ -37,10 +43,14 @@ final class GeoLocationViewModel: ObservableObject {
     private func bindServices() {
         locationService.locationPublisher
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in },
-                  receiveValue: { [weak self] location in
-                self?.userLocation = location.coordinate
-            })
+            .sink(
+                receiveCompletion: { completion in
+                    print("[LocationPublisher] completion: \(completion)")
+                },
+                receiveValue: { [weak self] location in
+                    self?.handleNewLocation(location)
+                }
+            )
             .store(in: &cancellables)
 
         locationService.authorizationPublisher
@@ -71,29 +81,99 @@ final class GeoLocationViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-    func getPlaceName(from location: CLLocation) -> AnyPublisher<String, APIError> {
+    private func handleNewLocation(_ location: CLLocation) {
+        userLocation = location.coordinate
+
+        guard let last = lastFetchedLocation else {
+            lastFetchedLocation = location
+            getPlaceName(from: location)
+                .sink { [weak self] completion in
+                    if case .failure(let error) = completion {
+                        self?.locationError = error
+                    }
+                } receiveValue: { [weak self] placeName in
+                    guard let self = self else { return }
+                    self.stringLatestLocation = placeName
+                    self.stringCurrentLocation = placeName
+                    self.stringDistanceChanged = "0 m"
+                    let newPlace = VisitedPlaceModel(
+                        name: placeName,
+                        location: location.coordinate,
+                        date: Date(),
+                        timestamp: Date()
+                    )
+                    self.visitedPlaces.append(newPlace)
+                }
+                .store(in: &cancellables)
+            return
+        }
+        let distance = location.distance(from: last)
+        stringDistanceChanged = String(format: "%.2f m", distance)
+        guard distance >= 20 else {
+            return
+        }
+
+        getPlaceName(from: location)
+            .sink { [weak self] completion in
+                if case .failure(let error) = completion {
+                    self?.locationError = error
+                }
+            } receiveValue: { [weak self] placeName in
+                guard let self = self else { return }
+
+                self.stringCurrentLocation = placeName
+                if self.stringLatestLocation.isEmpty {
+                    self.stringLatestLocation = placeName
+                }
+
+                let newPlace = VisitedPlaceModel(
+                    name: placeName,
+                    location: location.coordinate,
+                    date: Date(),
+                    timestamp: Date()
+                )
+
+                if !self.visitedPlaces.contains(where: {
+                    $0.isDuplicate(of: newPlace)
+                }) {
+                    self.visitedPlaces.append(newPlace)
+                }
+
+                self.lastFetchedLocation = location
+            }
+            .store(in: &cancellables)
+    }
+
+    func getPlaceName(from location: CLLocation) -> AnyPublisher<
+        String, APIError
+    > {
         guard isConnected else {
             return Fail(error: .noConnection).eraseToAnyPublisher()
         }
 
         return Future<String, APIError> { [weak self] promise in
-            self?.geocoder.reverseGeocodeLocation(location) { placemarks, error in
+
+            self?.geocoder.reverseGeocodeLocation(location) {
+                placemarks,
+                error in
                 if let error = error {
-                    promise(.failure(LocationErrorMapper.map(error)))
-                    print(promise(.failure(LocationErrorMapper.map(error))))
+                    let mappedError = LocationErrorMapper.map(error)
+                    promise(.failure(mappedError))
                     return
                 }
 
                 guard let placemark = placemarks?.first,
-                      let name = placemark.name,
-                      let locality = placemark.locality,
-                      let administrativeArea = placemark.administrativeArea,
-                      let country = placemark.country else {
+                    let name = placemark.name,
+                    let locality = placemark.locality,
+                    let administrativeArea = placemark.administrativeArea,
+                    let country = placemark.country
+                else {
                     promise(.failure(.geocodingFailed))
                     return
                 }
 
-                let fullName = [name, locality, administrativeArea, country].joined(separator: ", ")
+                let fullName = [name, locality, administrativeArea, country]
+                    .joined(separator: ", ")
                 promise(.success(fullName))
             }
         }

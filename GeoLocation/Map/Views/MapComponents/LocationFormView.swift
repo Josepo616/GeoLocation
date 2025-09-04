@@ -8,27 +8,29 @@
 import SwiftUI
 
 struct LocationFormView: View {
-    
+
     @Binding var stringLatestLocation: String
     @Binding var stringCurrentLocation: String
     @Binding var stringDistanceChanged: String
+    @ObservedObject var locationViewModel: GeoLocationViewModel
 
     var body: some View {
         Form {
             Section(header: Text("Latest location")) {
-                TextField("Hello example", text: $stringLatestLocation)
+                TextField("N/A", text: $stringLatestLocation)
                     .disabled(true)
             }
 
             Section(header: Text("Current location")) {
-                TextField("Hello example", text: $stringCurrentLocation)
+                TextField("N/A", text: $stringCurrentLocation)
                     .disabled(true)
             }
 
             Section(header: Text("Distance changed")) {
-                TextField("Hello example", text: $stringDistanceChanged)
+                TextField("N/A", text: $stringDistanceChanged)
                     .disabled(true)
             }
         }
+
     }
 }

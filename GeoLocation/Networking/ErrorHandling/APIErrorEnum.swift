@@ -18,7 +18,7 @@ enum APIError: Error, Equatable {
              (.geocodingFailed, .geocodingFailed):
             return true
         case (.unknown, .unknown):
-            return true // Opcional: Podrías hacer false para no considerar iguales dos errores .unknown distintos
+            return true
         default:
             return false
         }

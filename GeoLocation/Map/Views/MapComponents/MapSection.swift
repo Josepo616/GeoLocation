@@ -8,9 +8,6 @@
 import MapKit
 import SwiftUI
 
-import MapKit
-import SwiftUI
-
 struct MapSection: View {
     
     @Binding var mapView: MKMapView
@@ -60,7 +57,6 @@ private extension MapSection {
         .cornerRadius(30)
         .onAppear {
             dropInitialPinIfNeeded(at: userLocation)
-            print("error: \(String(describing: error))")
         }
         .onReceive(TapMapView.coordinatePublisher) { coordinate in
             handleMapTap(at: coordinate)

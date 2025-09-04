@@ -6,13 +6,15 @@
 //
 
 import SwiftUI
+import CoreLocation
 
 struct TrackingControlsView: View {
     
+    @ObservedObject var locationViewModel: GeoLocationViewModel
+
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 16) {            
             Button(action: {
-                print("first")
             }) {
                 HStack {
                     Image(systemName: "restart")
