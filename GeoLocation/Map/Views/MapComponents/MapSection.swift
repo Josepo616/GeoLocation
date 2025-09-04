@@ -8,78 +8,90 @@
 import MapKit
 import SwiftUI
 
-struct MapSection: View {
+import MapKit
+import SwiftUI
 
+struct MapSection: View {
+    
     @Binding var mapView: MKMapView
     @Binding var droppedPins: [CLLocationCoordinate2D]
-    @State var showInfo = false
-    @State var showFailed = false
+    
+    @State private var showInfo = false
     @State private var didDropInitialPin = false
-    @State private var placeFormated = ""
+    @State private var placeFormatted = ""
     @State private var errorMessage = ""
-    private let geocoder = CLGeocoder()
+    @State var showFailed = false
+    
     var error: APIError?
     var locationViewModel: GeoLocationViewModel
-
-
+    
+    private let geocoder = CLGeocoder()
+    
     var body: some View {
         VStack {
             if let userLocation = locationViewModel.userLocation {
-                TapMapView(
-                    droppedPins: $droppedPins,
-                    initialCenter: userLocation
-                )
-                .frame(maxWidth: .infinity, maxHeight: 300, alignment: .top)
-                .cornerRadius(30)
-                .onAppear {
-                    if !didDropInitialPin {
-                        droppedPins.append(userLocation)
-                        didDropInitialPin = true
-                    }
-                }
-                .onReceive(TapMapView.coordinatePublisher) { coordinate in
-                    handleMapTap(at: coordinate)
-                }
-                .alert("Location", isPresented: $showInfo, presenting: placeFormated)
-                { _ in
-                    Button("OK") { showInfo = false }
-                } message: { _ in
-
-                    Text(placeFormated)
-                        .foregroundColor(Color.red)
-                }
-                .alert("Error", isPresented: $showFailed, presenting: error)
-                { _ in
-                    Button("OK") { showFailed = false }
-                } message: { error in
-
-                    Text(error.errorDescription!)
-                        .foregroundColor(Color.red)
-                }
+                mapContent(userLocation: userLocation)
             } else {
-                ProgressView("Getting location...")
-                    .frame(height: 300)
+                loadingView
             }
         }
+        .alert("Location", isPresented: $showInfo, presenting: placeFormatted) { _ in
+            Button("OK") { showInfo = false }
+        } message: { place in
+            Text(place).foregroundColor(.red)
+        }
+        .alert("Error", isPresented: $showFailed, presenting: error) { _ in
+            Button("OK") { locationViewModel.showFailed = false }
+        } message: { error in
+            Text(error.errorDescription ?? "Unknown error").foregroundColor(.red)
+        }
+    }
+}
+
+private extension MapSection {
+    
+    @ViewBuilder
+    func mapContent(userLocation: CLLocationCoordinate2D) -> some View {
+        TapMapView(
+            droppedPins: $droppedPins,
+            initialCenter: userLocation
+        )
+        .frame(maxWidth: .infinity, maxHeight: 300, alignment: .top)
+        .cornerRadius(30)
+        .onAppear {
+            dropInitialPinIfNeeded(at: userLocation)
+            print("error: \(String(describing: error))")
+        }
+        .onReceive(TapMapView.coordinatePublisher) { coordinate in
+            handleMapTap(at: coordinate)
+        }
+    }
+    
+    var loadingView: some View {
+        ProgressView("Getting location...")
+            .frame(height: 300)
+            .onChange(of: locationViewModel.showFailed) {
+                showFailed = locationViewModel.showFailed
+            }
     }
 
-    // MARK: - Helpers
-
-    private func handleMapTap(at coordinate: CLLocationCoordinate2D) {
-        let clLocation = CLLocation(
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude
-        )
-
-        locationViewModel.getPlaceName(from: clLocation)
+    func dropInitialPinIfNeeded(at location: CLLocationCoordinate2D) {
+        guard !didDropInitialPin else { return }
+        droppedPins.append(location)
+        didDropInitialPin = true
+    }
+    
+    func handleMapTap(at coordinate: CLLocationCoordinate2D) {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        locationViewModel.getPlaceName(from: location)
             .sink { completion in
-                print("get place if not fail")
                 if case .failure(let error) = completion {
                     print("[Geocoder] Error: \(error.localizedDescription)")
                     showFailed = true
                 }
             } receiveValue: { placeName in
-                placeFormated = placeName
+                placeFormatted = placeName
                 showInfo = true
             }
             .store(in: &locationViewModel.cancellables)

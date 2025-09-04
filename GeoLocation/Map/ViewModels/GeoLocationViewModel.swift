@@ -14,7 +14,9 @@ final class GeoLocationViewModel: ObservableObject {
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var authorizationStatus: CLAuthorizationStatus?
     @Published var locationError: APIError?
+    @Published var showFailed = false
     @Published private(set) var isConnected: Bool = true
+
 
     private let locationService = LocationService()
     private let networkMonitor = NetworkMonitorService()
@@ -52,6 +54,7 @@ final class GeoLocationViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] error in
                 self?.locationError = error
+                self?.showFailed = true
             }
             .store(in: &cancellables)
 
@@ -77,6 +80,7 @@ final class GeoLocationViewModel: ObservableObject {
             self?.geocoder.reverseGeocodeLocation(location) { placemarks, error in
                 if let error = error {
                     promise(.failure(LocationErrorMapper.map(error)))
+                    print(promise(.failure(LocationErrorMapper.map(error))))
                     return
                 }
 
