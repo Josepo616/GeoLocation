@@ -10,7 +10,6 @@ import SwiftUI
 
 struct MapContentView: View {
 
-    @State private var droppedPins: [CLLocationCoordinate2D] = []
     @State private var mapView = MKMapView()
     @ObservedObject var locationViewModel: GeoLocationViewModel
 
@@ -18,7 +17,7 @@ struct MapContentView: View {
         VStack {
             MapSection(
                 mapView: $mapView,
-                droppedPins: $droppedPins,
+                droppedPins: $locationViewModel.droppedPins,
                 error: locationViewModel.locationError,
                 locationViewModel: locationViewModel
             )

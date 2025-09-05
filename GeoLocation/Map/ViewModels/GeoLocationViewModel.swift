@@ -20,11 +20,12 @@ final class GeoLocationViewModel: ObservableObject {
     @Published var stringLatestLocation: String = ""
     @Published var stringCurrentLocation: String = ""
     @Published var stringDistanceChanged: String = ""
-    
+    @Published var droppedPins: [CLLocationCoordinate2D] = []
     private let locationService = LocationService()
     private let networkMonitor = NetworkMonitorService()
     private let geocoder = CLGeocoder()
     private var lastFetchedLocation: CLLocation?
+    private var initialLocation: CLLocation?
 
     var cancellables = Set<AnyCancellable>()
 
@@ -83,7 +84,10 @@ final class GeoLocationViewModel: ObservableObject {
 
     private func handleNewLocation(_ location: CLLocation) {
         userLocation = location.coordinate
-
+        if initialLocation == nil {
+            initialLocation = location
+            print ("Initial Location: \(initialLocation!)")
+        }
         guard let last = lastFetchedLocation else {
             lastFetchedLocation = location
             getPlaceName(from: location)
@@ -107,8 +111,11 @@ final class GeoLocationViewModel: ObservableObject {
                 .store(in: &cancellables)
             return
         }
+        guard let initialLocation = initialLocation else { return }
+        let distanceToshow = location.distance(from: initialLocation)
+        stringDistanceChanged = String(format: "%.2f m", distanceToshow)
+        
         let distance = location.distance(from: last)
-        stringDistanceChanged = String(format: "%.2f m", distance)
         guard distance >= 20 else {
             return
         }
@@ -138,7 +145,7 @@ final class GeoLocationViewModel: ObservableObject {
                 }) {
                     self.visitedPlaces.append(newPlace)
                 }
-
+                self.droppedPins.append(userLocation!)
                 self.lastFetchedLocation = location
             }
             .store(in: &cancellables)

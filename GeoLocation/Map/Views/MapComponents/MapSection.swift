@@ -17,8 +17,9 @@ struct MapSection: View {
     @State private var didDropInitialPin = false
     @State private var placeFormatted = ""
     @State private var errorMessage = ""
+    @State private var userLocation: CLLocationCoordinate2D?
     @State var showFailed = false
-    
+
     var error: APIError?
     var locationViewModel: GeoLocationViewModel
     
@@ -26,8 +27,8 @@ struct MapSection: View {
     
     var body: some View {
         VStack {
-            if let userLocation = locationViewModel.userLocation {
-                mapContent(userLocation: userLocation)
+            if let userInitialPosition = locationViewModel.userLocation {
+                mapContent(userInitialPosition: userInitialPosition, userLocation: locationViewModel.userLocation)
             } else {
                 loadingView
             }
@@ -48,15 +49,16 @@ struct MapSection: View {
 private extension MapSection {
     
     @ViewBuilder
-    func mapContent(userLocation: CLLocationCoordinate2D) -> some View {
+    func mapContent(userInitialPosition: CLLocationCoordinate2D, userLocation: CLLocationCoordinate2D?) -> some View {
         TapMapView(
             droppedPins: $droppedPins,
-            initialCenter: userLocation
+            userLocation: $userLocation,
+            initialCenter: userInitialPosition
         )
         .frame(maxWidth: .infinity, maxHeight: 300, alignment: .top)
         .cornerRadius(30)
         .onAppear {
-            dropInitialPinIfNeeded(at: userLocation)
+            dropInitialPinIfNeeded(at: userInitialPosition)
         }
         .onReceive(TapMapView.coordinatePublisher) { coordinate in
             handleMapTap(at: coordinate)

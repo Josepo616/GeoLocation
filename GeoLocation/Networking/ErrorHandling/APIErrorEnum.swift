@@ -1,13 +1,13 @@
 //
 //  APIError.swift
-//  StarWars
+//  GeoLocation
 //
 //  Created by JoseAlvarez on 8/28/25.
 //
 
 import Foundation
 
-// MARK: - APIError personalizado
+// MARK: - APIError
 enum APIError: Error, Equatable {
     
     static func == (lhs: APIError, rhs: APIError) -> Bool {

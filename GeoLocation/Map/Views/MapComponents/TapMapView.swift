@@ -12,6 +12,7 @@ import SwiftUI
 struct TapMapView: UIViewRepresentable {
 
     @Binding var droppedPins: [CLLocationCoordinate2D]
+    @Binding var userLocation: CLLocationCoordinate2D?
     var initialCenter: CLLocationCoordinate2D?
     static let coordinatePublisher = PassthroughSubject<
         CLLocationCoordinate2D, Never
@@ -31,6 +32,8 @@ struct TapMapView: UIViewRepresentable {
             )
             mapView.setRegion(region, animated: true)
         }
+        mapView.showsUserLocation = true
+        mapView.userTrackingMode = .followWithHeading
 
         let tapGesture = UITapGestureRecognizer(
             target: context.coordinator,
@@ -77,11 +80,6 @@ struct TapMapView: UIViewRepresentable {
             
             self.coordinatePublisher.send(coordinate)
             TapMapView.coordinatePublisher.send(coordinate)
-
-            if !self.parent.droppedPins.isEmpty {
-                self.parent.droppedPins.removeLast()
-            }
-
             self.parent.droppedPins.append(coordinate)
         }
     }

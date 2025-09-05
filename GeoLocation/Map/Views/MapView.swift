@@ -30,20 +30,3 @@ struct MapView: View {
         }
     }
 }
-
-/*
-#Preview {
-    @Previewable @State var stringLatestLocation: String = ""
-    @Previewable @State var stringCurrentLocation: String = ""
-    @Previewable @State var stringDistanceChaged: String = ""
-    @Previewable @State var visitedPlaces: [String] = []
-    
-
-    MapView(
-        stringLatestLocation: $stringLatestLocation,
-        stringCurrentLocation: $stringCurrentLocation,
-        stringDistanceChanged: $stringDistanceChaged,
-        vistiedPlaces: $visitedPlaces
-    )
-}
-*/
