@@ -24,7 +24,6 @@ enum APIError: Error, Equatable {
         }
     }
 
-    
     case locationPermissionDenied
     case noConnection
     case locationUnavailable

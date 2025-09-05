@@ -14,6 +14,7 @@ struct TapMapView: UIViewRepresentable {
     @Binding var droppedPins: [CLLocationCoordinate2D]
     @Binding var userLocation: CLLocationCoordinate2D?
     var initialCenter: CLLocationCoordinate2D?
+    
     static let coordinatePublisher = PassthroughSubject<
         CLLocationCoordinate2D, Never
     >()
@@ -34,7 +35,6 @@ struct TapMapView: UIViewRepresentable {
         }
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .followWithHeading
-
         let tapGesture = UITapGestureRecognizer(
             target: context.coordinator,
             action: #selector(Coordinator.handleTap(_:))

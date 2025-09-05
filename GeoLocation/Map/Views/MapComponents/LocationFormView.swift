@@ -9,10 +9,10 @@ import SwiftUI
 
 struct LocationFormView: View {
 
+    @ObservedObject var locationViewModel: GeoLocationViewModel
     @Binding var stringLatestLocation: String
     @Binding var stringCurrentLocation: String
     @Binding var stringDistanceChanged: String
-    @ObservedObject var locationViewModel: GeoLocationViewModel
 
     var body: some View {
         Form {

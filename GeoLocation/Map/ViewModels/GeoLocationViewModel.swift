@@ -26,12 +26,10 @@ final class GeoLocationViewModel: ObservableObject {
     private let geocoder = CLGeocoder()
     private var lastFetchedLocation: CLLocation?
     private var initialLocation: CLLocation?
-
     var cancellables = Set<AnyCancellable>()
 
     init() {
         bindServices()
-
         Timer
             .publish(every: 5.0, on: .main, in: .common)
             .autoconnect()
@@ -86,7 +84,6 @@ final class GeoLocationViewModel: ObservableObject {
         userLocation = location.coordinate
         if initialLocation == nil {
             initialLocation = location
-            print ("Initial Location: \(initialLocation!)")
         }
         guard let last = lastFetchedLocation else {
             lastFetchedLocation = location
@@ -128,10 +125,10 @@ final class GeoLocationViewModel: ObservableObject {
             } receiveValue: { [weak self] placeName in
                 guard let self = self else { return }
 
-                self.stringCurrentLocation = placeName
-                if self.stringLatestLocation.isEmpty {
-                    self.stringLatestLocation = placeName
+                if self.stringLatestLocation.isEmpty  || self.stringLatestLocation != self.stringCurrentLocation{
+                    self.stringLatestLocation = self.stringCurrentLocation
                 }
+                self.stringCurrentLocation = placeName
 
                 let newPlace = VisitedPlaceModel(
                     name: placeName,

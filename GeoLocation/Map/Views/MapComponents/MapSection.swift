@@ -12,18 +12,15 @@ struct MapSection: View {
     
     @Binding var mapView: MKMapView
     @Binding var droppedPins: [CLLocationCoordinate2D]
-    
     @State private var showInfo = false
     @State private var didDropInitialPin = false
     @State private var placeFormatted = ""
     @State private var errorMessage = ""
     @State private var userLocation: CLLocationCoordinate2D?
     @State var showFailed = false
-
+    private let geocoder = CLGeocoder()
     var error: APIError?
     var locationViewModel: GeoLocationViewModel
-    
-    private let geocoder = CLGeocoder()
     
     var body: some View {
         VStack {
