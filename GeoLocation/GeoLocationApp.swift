@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct GeoLocationApp: App {
+    
+    @StateObject private var locationViewModel = GeoLocationViewModel()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MapView(
+                locationViewModel: locationViewModel
+            )
         }
     }
 }
