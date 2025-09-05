@@ -72,3 +72,5 @@ All errors are surfaced to the user through alerts or disabled states.
 ---
 
 ## 📂 Project Structure  
+
+![ProjectStruct.png](https://raw.githubusercontent.com/Josepo616/GeoLocation/refs/heads/week-08/ProjectStruct.png)
