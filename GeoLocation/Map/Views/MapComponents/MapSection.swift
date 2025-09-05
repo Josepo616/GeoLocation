@@ -52,7 +52,7 @@ private extension MapSection {
             userLocation: $userLocation,
             initialCenter: userInitialPosition
         )
-        .frame(maxWidth: .infinity, maxHeight: 300, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: 500, alignment: .top)
         .cornerRadius(30)
         .onAppear {
             dropInitialPinIfNeeded(at: userInitialPosition)
@@ -64,7 +64,7 @@ private extension MapSection {
     
     var loadingView: some View {
         ProgressView("Getting location...")
-            .frame(height: 300)
+            .frame(height: 350)
             .onChange(of: locationViewModel.showFailed) {
                 showFailed = locationViewModel.showFailed
             }

@@ -30,13 +30,6 @@ final class GeoLocationViewModel: ObservableObject {
 
     init() {
         bindServices()
-        Timer
-            .publish(every: 5.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                self?.locationService.requestLocation()
-            }
-            .store(in: &cancellables)
     }
 
     private func bindServices() {
@@ -56,6 +49,11 @@ final class GeoLocationViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
                 self?.authorizationStatus = status
+                if status == .authorizedWhenInUse || status == .authorizedAlways {
+                    self?.startLocationUpdates()
+                } else {
+                    self?.locationError = .locationPermissionDenied
+                }
             }
             .store(in: &cancellables)
 
@@ -76,6 +74,16 @@ final class GeoLocationViewModel: ObservableObject {
                 } else if self?.locationError == .noConnection {
                     self?.locationError = nil
                 }
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func startLocationUpdates() {
+        Timer
+            .publish(every: 5.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                self?.locationService.requestLocation()
             }
             .store(in: &cancellables)
     }
