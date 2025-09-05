@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Compares two VisitedPlaceModel objects to check if they have the same name and location coordinates.
 extension VisitedPlaceModel {
     func isDuplicate(of other: VisitedPlaceModel) -> Bool {
         return self.name == other.name &&

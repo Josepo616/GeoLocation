@@ -8,6 +8,8 @@
 import Foundation
 import MapKit
 
+/// Extends CLLocationCoordinate2D to conform to Hashable and Equatable protocols,
+/// allowing instances to be compared for equality and used in collections like sets or dictionaries.
 extension CLLocationCoordinate2D: @retroactive Equatable {}
 extension CLLocationCoordinate2D: @retroactive Hashable {
     

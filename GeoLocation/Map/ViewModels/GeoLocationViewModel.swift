@@ -9,6 +9,7 @@ import Combine
 import CoreLocation
 import Foundation
 
+/// ViewModel responsible for managing location data, connectivity, and user's visited places.
 final class GeoLocationViewModel: ObservableObject {
 
     @Published private(set) var isConnected: Bool = true
@@ -32,6 +33,9 @@ final class GeoLocationViewModel: ObservableObject {
         bindServices()
     }
 
+    // MARK: - Bindings
+    /// Binds the location, authorization, error, and network monitors to update the view model's properties.
+    /// This ensures the ViewModel reacts to location updates, permission changes, errors, and network status.
     private func bindServices() {
         locationService.locationPublisher
             .receive(on: DispatchQueue.main)
@@ -78,6 +82,7 @@ final class GeoLocationViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
+    /// Starts location updates by periodically requesting the user's location every 5 seconds.
     private func startLocationUpdates() {
         Timer
             .publish(every: 5.0, on: .main, in: .common)
@@ -88,6 +93,8 @@ final class GeoLocationViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    /// Handles updates when a new location is fetched.
+    /// It checks for significant location changes and updates the user's location, place name, and distance.
     private func handleNewLocation(_ location: CLLocation) {
         userLocation = location.coordinate
         if initialLocation == nil {
@@ -150,12 +157,14 @@ final class GeoLocationViewModel: ObservableObject {
                 }) {
                     self.visitedPlaces.append(newPlace)
                 }
-                self.droppedPins.append(userLocation!)
+                self.droppedPins.append(userLocation ?? CLLocationCoordinate2D(latitude: 48.8584, longitude: 2.3522))
                 self.lastFetchedLocation = location
             }
             .store(in: &cancellables)
     }
 
+    /// Fetches the place name for a given location using reverse geocoding.
+    /// If the user is offline, it returns a no connection error.
     func getPlaceName(from location: CLLocation) -> AnyPublisher<
         String, APIError
     > {

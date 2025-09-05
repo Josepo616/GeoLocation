@@ -15,7 +15,7 @@ final class NetworkMonitorService {
     private let monitorQueue = DispatchQueue(label: "NetworkMonitorQueue")
     private let connectivitySubject = CurrentValueSubject<Bool, Never>(true)
     private var cancellables = Set<AnyCancellable>()
-    private let checkURL = URL(string: "https://www.apple.com")!
+    private let checkURL = URL(string: "https://www.apple.com")
 
     var isConnectedPublisher: AnyPublisher<Bool, Never> {
         connectivitySubject.eraseToAnyPublisher()
@@ -49,6 +49,10 @@ final class NetworkMonitorService {
     }
 
     func checkInternetConnectivity() -> AnyPublisher<Bool, Never> {
+        guard let checkURL = checkURL else {
+            return Just(false).eraseToAnyPublisher()
+        }
+
         var request = URLRequest(url: checkURL)
         request.httpMethod = "HEAD"
         request.timeoutInterval = 2
