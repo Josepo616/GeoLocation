@@ -7,6 +7,7 @@
 
 import CoreLocation
 
+/// Mapping errors about the permissions
 enum LocationErrorMapper {
     static func map(_ error: Error) -> APIError {
         if let clError = error as? CLError {

@@ -9,13 +9,13 @@ import Foundation
 
 // MARK: - APIError
 enum APIError: Error, Equatable {
-    
+
     static func == (lhs: APIError, rhs: APIError) -> Bool {
         switch (lhs, rhs) {
         case (.locationPermissionDenied, .locationPermissionDenied),
-             (.noConnection, .noConnection),
-             (.locationUnavailable, .locationUnavailable),
-             (.geocodingFailed, .geocodingFailed):
+            (.noConnection, .noConnection),
+            (.locationUnavailable, .locationUnavailable),
+            (.geocodingFailed, .geocodingFailed):
             return true
         case (.unknown, .unknown):
             return true

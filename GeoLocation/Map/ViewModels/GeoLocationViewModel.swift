@@ -53,7 +53,8 @@ final class GeoLocationViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] status in
                 self?.authorizationStatus = status
-                if status == .authorizedWhenInUse || status == .authorizedAlways {
+                if status == .authorizedWhenInUse || status == .authorizedAlways
+                {
                     self?.startLocationUpdates()
                 } else {
                     self?.locationError = .locationPermissionDenied
@@ -81,7 +82,8 @@ final class GeoLocationViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
+
+    // MARK: - Location funcitons
     /// Starts location updates by periodically requesting the user's location every 5 seconds.
     private func startLocationUpdates() {
         Timer
@@ -123,10 +125,11 @@ final class GeoLocationViewModel: ObservableObject {
                 .store(in: &cancellables)
             return
         }
+        
         guard let initialLocation = initialLocation else { return }
+        
         let distanceToshow = location.distance(from: initialLocation)
         stringDistanceChanged = String(format: "%.2f m", distanceToshow)
-        
         let distance = location.distance(from: last)
         guard distance >= 20 else {
             return
@@ -140,7 +143,9 @@ final class GeoLocationViewModel: ObservableObject {
             } receiveValue: { [weak self] placeName in
                 guard let self = self else { return }
 
-                if self.stringLatestLocation.isEmpty  || self.stringLatestLocation != self.stringCurrentLocation{
+                if self.stringLatestLocation.isEmpty
+                    || self.stringLatestLocation != self.stringCurrentLocation
+                {
                     self.stringLatestLocation = self.stringCurrentLocation
                 }
                 self.stringCurrentLocation = placeName
@@ -157,7 +162,13 @@ final class GeoLocationViewModel: ObservableObject {
                 }) {
                     self.visitedPlaces.append(newPlace)
                 }
-                self.droppedPins.append(userLocation ?? CLLocationCoordinate2D(latitude: 48.8584, longitude: 2.3522))
+                self.droppedPins.append(
+                    userLocation
+                        ?? CLLocationCoordinate2D(
+                            latitude: 48.8584,
+                            longitude: 2.3522
+                        )
+                )
                 self.lastFetchedLocation = location
             }
             .store(in: &cancellables)

@@ -9,6 +9,8 @@ import Foundation
 import Network
 import Combine
 
+/// A service class that monitors network connectivity, provides a publisher to
+/// track connectivity changes, and performs periodic checks to verify internet access.
 final class NetworkMonitorService {
     
     private let monitor = NWPathMonitor()
@@ -21,6 +23,8 @@ final class NetworkMonitorService {
         connectivitySubject.eraseToAnyPublisher()
     }
 
+    /// Initializes the monitor and starts periodic connectivity checks.
+    /// The monitor updates whenever the network path changes.
     init() {
         monitor.pathUpdateHandler = { [weak self] path in
             self?.startScheduledConnectivityChecks()
@@ -30,6 +34,8 @@ final class NetworkMonitorService {
         startScheduledConnectivityChecks()
     }
 
+    /// Starts a scheduled connectivity check every 5 seconds, updating the connectivity status.
+    /// Stops previous checks when called to avoid multiple timers.
     private func startScheduledConnectivityChecks() {
         cancellables.removeAll()
 
@@ -48,6 +54,8 @@ final class NetworkMonitorService {
             .store(in: &cancellables)
     }
 
+    /// Checks if the device has internet connectivity by sending a "HEAD" request to a check URL.
+    /// If the response is successful, returns true. Otherwise, returns false.
     func checkInternetConnectivity() -> AnyPublisher<Bool, Never> {
         guard let checkURL = checkURL else {
             return Just(false).eraseToAnyPublisher()

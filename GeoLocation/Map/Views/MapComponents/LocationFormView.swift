@@ -31,6 +31,5 @@ struct LocationFormView: View {
                     .disabled(true)
             }
         }
-
     }
 }

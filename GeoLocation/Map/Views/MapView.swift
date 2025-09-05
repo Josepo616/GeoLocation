@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MapView: View {
-    
+
     @ObservedObject var locationViewModel: GeoLocationViewModel
 
     var body: some View {
@@ -20,11 +20,13 @@ struct MapView: View {
                         Text("Map")
                     }
 
-                VisitedPlacesView(visitedPlaces: locationViewModel.visitedPlaces)
-                    .tabItem {
-                        Image(systemName: "location.fill")
-                        Text("Visited places")
-                    }
+                VisitedPlacesView(
+                    visitedPlaces: locationViewModel.visitedPlaces
+                )
+                .tabItem {
+                    Image(systemName: "location.fill")
+                    Text("Visited places")
+                }
             }
             .accentColor(.green)
         }

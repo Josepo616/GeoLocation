@@ -9,16 +9,20 @@ import Combine
 import MapKit
 import SwiftUI
 
+/// A custom SwiftUI view that wraps MKMapView to handle user interactions such as tapping
+/// on the map to drop pins, and displaying user location on the map.
 struct TapMapView: UIViewRepresentable {
 
     @Binding var droppedPins: [CLLocationCoordinate2D]
     @Binding var userLocation: CLLocationCoordinate2D?
     var initialCenter: CLLocationCoordinate2D?
-    
+
     static let coordinatePublisher = PassthroughSubject<
         CLLocationCoordinate2D, Never
     >()
 
+    /// Creates and configures the MKMapView instance with the provided initial region,
+    /// user location tracking, and tap gesture recognizer.
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
@@ -58,6 +62,8 @@ struct TapMapView: UIViewRepresentable {
         Coordinator(self)
     }
 
+    /// Coordinator class to manage the interactions on the MKMapView, such as handling
+    /// tap gestures and publishing coordinates when the map is tapped.
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: TapMapView
         let coordinatePublisher = PassthroughSubject<
@@ -68,6 +74,8 @@ struct TapMapView: UIViewRepresentable {
             self.parent = parent
         }
 
+        /// Handles tap gestures on the map, converts the tapped location to a coordinate,
+        /// and adds the pin to the map.
         @objc func handleTap(_ gestureRecognizer: UITapGestureRecognizer) {
             guard let mapView = gestureRecognizer.view as? MKMapView else {
                 return
@@ -77,7 +85,7 @@ struct TapMapView: UIViewRepresentable {
                 location,
                 toCoordinateFrom: mapView
             )
-            
+
             self.coordinatePublisher.send(coordinate)
             TapMapView.coordinatePublisher.send(coordinate)
             self.parent.droppedPins.append(coordinate)
